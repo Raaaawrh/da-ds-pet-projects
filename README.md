@@ -1,2 +1,2 @@
 # da-ds-pet-projects
-It is reposytory that contains my pet-projects in data science/data analysis area.
+This is repository that contains my pet-projects in data science/data analysis area.
