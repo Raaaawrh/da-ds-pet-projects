@@ -1,10 +1,4 @@
-taxi-trips-2024-Chicago/data/Taxi_Trips_Clean.zip
-taxi-trips-2024-Chicago/data/Taxi_Trips_Dropped.zip
-taxi-trips-2024-Chicago/data/Taxi_Trips_Outliers.zip
-volleyball-matches-scraper/utils/__pycache__/__init__.cpython-39.pyc
-volleyball-matches-scraper/utils/__pycache__/__init__.cpython-310.pyc
-volleyball-matches-scraper/utils/__pycache__/scraper.cpython-39.pyc
-volleyball-matches-scraper/utils/__pycache__/scraper.cpython-310.pyc
-volleyball-matches-scraper/utils/__pycache__/user_agent_manager.cpython-39.pyc
-volleyball-matches-scraper/utils/__pycache__/user_agent_manager.cpython-310.pyc
-School Student Daily Attendance/data/2018-2019_Daily_Attendance_20240429.csv.zip
+taxi-trips-2024-Chicago/data/*
+volleyball-matches-scraper/utils/__pycache__/*
+school-student-daily-attendance/data/*
+
