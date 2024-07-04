@@ -1,0 +1,7 @@
+ipykernel
+nest_asyncio
+fake-useragent
+stem
+pytest-playwright
+beautifulsoup4
+tqdm

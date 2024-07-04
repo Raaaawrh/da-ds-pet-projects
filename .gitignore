@@ -2,3 +2,4 @@ taxi-trips-2024-Chicago/data/*
 volleyball-matches-scraper/utils/__pycache__/*
 school-student-daily-attendance/data/*
 
+volleyball-matches-scraper/.devcontainer.json
