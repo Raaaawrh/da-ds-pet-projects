@@ -15,7 +15,7 @@ class UserAgentManager:
     __TOR_CONTROL_PORT: int = int(environ['TOR_CONTROL_PORT'])
     __TOR_PASSWORD: str = environ['TOR_PASSWORD']
 
-    def __init__(self, password:str = 'password', logger_level: int = logging.INFO) -> None:
+    def __init__(self, logger_level: int = logging.INFO) -> None:
 
         self.logger = logging.getLogger(self.__class__.__name__)
         logging.basicConfig(level=logger_level)

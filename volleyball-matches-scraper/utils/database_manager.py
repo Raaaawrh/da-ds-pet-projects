@@ -8,7 +8,7 @@ class DatabaseManager:
     def __init__(self, db_filepath: str) -> None:
         self.db_filepath = db_filepath
 
-        self.conn = sqlite3.connect(self.db_filepath, check_same_thread=False)
+        self.conn = sqlite3.connect(self.db_filepath, )
         self.cursor = self.conn.cursor()
         self.create_db()
 

@@ -6,6 +6,7 @@ FROM ubuntu:jammy
 LABEL Author="anatolii.farenik@yandex.com"
 ARG PROJECT_NAME=volleyball-matches-scraper
 
+
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 #~~~~~~~~~~ Init build variables and env variables ~~~~~~~~~~#
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
@@ -13,7 +14,7 @@ ARG GROUP_NAME=vscode \
     GROUP_ID=1000 \
     USER_NAME=vscode \
     USER_ID=1000 
-    
+
 ENV VIRTUAL_ENV=/home/${USER_NAME}/projects/${PROJECT_NAME}/.venv \
     PATH="$VIRTUAL_ENV/bin:$PATH" \
     PYTHONPATH=/home/${USER_NAME}/projects/${PROJECT_NAME} \
@@ -28,7 +29,7 @@ ENV VIRTUAL_ENV=/home/${USER_NAME}/projects/${PROJECT_NAME}/.venv \
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 #~~~~~~~~~~ Update system and install packages ~~~~~~~~~~#
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
-    # Timezone info
+# Timezone info
 RUN ln -snf /usr/share/zoneinfo/$CONTAINER_TIMEZONE /etc/localtime && echo $CONTAINER_TIMEZONE > /etc/timezone \
     && \
     apt-get -y update \
@@ -71,50 +72,61 @@ RUN ln -snf /usr/share/zoneinfo/$CONTAINER_TIMEZONE /etc/localtime && echo $CONT
     && \
     rm -rf /var/cache/apt/archives /var/lib/apt/lists/*
 
+
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 #~~~~~~~~~~ Add non-root user and create catalogues ~~~~~~~~~~#
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
-
 RUN groupadd --gid ${GROUP_ID} ${GROUP_NAME} \
     && \
     useradd --home-dir /home/${USER_NAME} --create-home \
-            --gid ${GROUP_ID}             --uid ${USER_ID} \
-            --shell /bin/bash             --skel /dev/null ${USER_NAME} \
+    --gid ${GROUP_ID}             --uid ${USER_ID} \
+    --shell /bin/bash             --skel /dev/null ${USER_NAME} \
     && \
     mkdir -p /home/${USER_NAME}/projects/${PROJECT_NAME} \
     && \
     chown -R ${USER_NAME}:${GROUP_NAME} /home/${USER_NAME}
 
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
-#~~~~~~~~~~ Copy files ~~~~~~~~~~#
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
+#~~~~~~~~~~ Configure tor ~~~~~~~~~~#
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 COPY torrc /etc/tor/torrc
-USER ${USER_NAME}
-WORKDIR /home/${USER_NAME}/projects/${PROJECT_NAME}
-COPY requirements.txt .
-# COPY utils ./utils/
-# COPY volleyball-matches-scraper ./volleyball-matches-scraper/
-# COPY --chown=${USER_NAME}:${GROUP_NAME} . /home/${USER_NAME}/projects/${PROJECT_NAME}/
+RUN echo "CookieAuthentication 0" >> /etc/tor/torrc && \
+    echo "ControlPort ${TOR_CONTROL_PORT}" >> /etc/tor/torrc && \
+    echo "SOCKSPort ${TOR_SOCKS_PORT}" >> /etc/tor/torrc && \
+    echo "HashedControlPassword $(tor --hash-password ${TOR_PASSWORD} | tail -n 1)" >> /etc/tor/torrc
+
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 #~~~~~~~~~~ Create python env and install packages into it ~~~~~~~~~~#
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
+USER ${USER_NAME}
+WORKDIR /home/${USER_NAME}/projects/${PROJECT_NAME}
+COPY requirements.txt .
 RUN python3 -m venv --system-site-packages .venv \
     && \
     . .venv/bin/activate \
     && \
     python3 -m pip install --no-cache-dir -r requirements.txt \
     && \ 
-    python3 -m playwright install firefox
+    python3 -m playwright install firefox && \
+    # Create data folder
+    mkdir data
 
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
-#~~~~~~~~~~ Configure tor ~~~~~~~~~~#
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
-USER root
-RUN echo "CookieAuthentication 0" >> /etc/tor/torrc && \
-    echo "ControlPort ${TOR_CONTROL_PORT}" >> /etc/tor/torrc && \
-    echo "SOCKSPort ${TOR_SOCKS_PORT}" >> /etc/tor/torrc && \
-    echo "HashedControlPassword $(tor --hash-password ${TOR_PASSWORD} | tail -n 1)" >> /etc/tor/torrc
 
-# Change user finally
-# USER ${USER_NAME}
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
+#~~~~~~~~~~ Copy files ~~~~~~~~~~#
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
+COPY utils ./utils/
+COPY volleyball-matches-scraper/ ./volleyball-matches-scraper/
+COPY entities ./entities/
+
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
+#~~~~~~~~~~ Scraper parameters in ENV ~~~~~~~~~~#
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
+ENV MATCH_ID_MIN=15000
+ENV MATCH_ID_MAX=16000
+ENV DB_NAME=volleyball_world.db
+
+ENTRYPOINT [ ".venv/bin/python3", "volleyball-matches-scraper/main.py" ]
